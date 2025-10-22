@@ -1,0 +1,33 @@
+/* src/styles/styles.css - estilos simples para que se vea presentable */
+
+/* Reset */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; }
+
+body { background: #f6f8fb; color: #222; min-height: 100vh; }
+
+.container { max-width: 1000px; margin: 24px auto; padding: 12px; }
+
+/* Navbar */
+.navbar { background: #ffffff; border-bottom: 1px solid #e6e9ef; padding: 12px 24px; display:flex; justify-content:space-between; align-items:center; }
+.navbar a { text-decoration: none; color: #111; margin-right: 12px; font-weight: 600; }
+.nav-user { margin-right: 8px; font-weight:500; }
+.btn-logout { background: transparent; border: 1px solid #ddd; padding: 6px 10px; border-radius:6px; cursor:pointer; }
+
+/* Forms */
+.auth-form, .task-form { background:#fff; padding:12px; border-radius:8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom:12px; }
+.auth-form input, .task-form input, .task-form textarea { width:100%; padding:8px; margin:8px 0; border:1px solid #e3e6ee; border-radius:6px; }
+.auth-form button, .task-form button { padding:8px 12px; border-radius:6px; border:none; background:#3b82f6; color:#fff; cursor:pointer; }
+
+/* Task list */
+.task-section { margin-top:12px; }
+.task-list { list-style:none; margin-top:12px; }
+.task-list li { background:#fff; margin-bottom:8px; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #edf1f7; }
+.task-list li.completed { opacity:0.7; text-decoration:line-through; }
+.task-main { display:flex; align-items:center; gap:8px; }
+.task-info .desc { font-size:0.9rem; color:#555; margin-top:4px; }
+.task-actions button { margin-left:8px; padding:6px 8px; border-radius:6px; border:1px solid #ddd; background:transparent; cursor:pointer; }
+.btn-delete { color:#b91c1c; border-color:#fca5a5; }
+
+/* Admin table */
+.admin-table { width:100%; border-collapse:collapse; margin-top:12px; }
+.admin-table th, .admin-table td { border:1px solid #eef2f7; padding:8px; text-align:left; }
