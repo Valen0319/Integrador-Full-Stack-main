@@ -16,6 +16,7 @@ export default function Dashboard() {
   const { user } = useContext(AuthContext);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTasks, setShowTasks] = useState(true);
+  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0, completionRate: 0 });
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
@@ -64,28 +65,41 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Controls row: left = view tasks, right = create task */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button className="view-btn" onClick={() => setShowTasks(s => !s)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                <span style={{ marginLeft: 8 }}>{showTasks ? 'Ocultar tareas' : 'Ver tareas'}</span>
-              </button>
+        {/* Nueva sección: estadísticas y controles de tareas */}
+        <div className="dashboard-stats" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 16 }}>
+          <div className="stats-cards" style={{ display: 'flex', gap: 12 }}>
+            <div className="stat-card">
+              <h4>Total</h4>
+              <p>{stats.total}</p>
             </div>
+            <div className="stat-card">
+              <h4>Pendientes</h4>
+              <p>{stats.pending}</p>
+            </div>
+            <div className="stat-card">
+              <h4>Completadas</h4>
+              <p>{stats.completed}</p>
+            </div>
+          </div>
 
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button className="create-btn" onClick={() => setShowCreateForm(true)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                <span style={{ marginLeft: 8 }}>Crear tarea</span>
-              </button>
-            </div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button className="view-btn" onClick={() => setShowTasks(s => !s)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <span style={{ marginLeft: 8 }}>{showTasks ? 'Ocultar tareas' : 'Ver tareas'}</span>
+            </button>
+
+            <button className="create-btn" onClick={() => setShowCreateForm(true)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <span style={{ marginLeft: 8 }}>Crear tarea</span>
+            </button>
           </div>
         </div>
 
         {/* Lista de tareas */}
-        <div className="page-container">
-          {showTasks && <TaskList showForm={showCreateForm} setShowForm={setShowCreateForm} />}
+        <div className="page-container" style={{ marginTop: 18 }}>
+          <TaskList visible={showTasks} showForm={showCreateForm} setShowForm={setShowCreateForm} onStatsChange={(s) => setStats(s)} />
         </div>
       </div>
     </div>

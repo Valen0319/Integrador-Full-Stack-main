@@ -4,6 +4,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import authRoutes from "./src/routes/authRoutes.js";
 import taskRoutes from "./src/routes/taskRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 import { db } from "./src/config/db.js";
 
 dotenv.config();
@@ -28,6 +29,7 @@ db.connect(err => {
 // Rutas principales
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Inicio del servidor
 const PORT = process.env.PORT || 3000;

@@ -29,3 +29,16 @@ export const login = (req, res) => {
     });
   });
 };
+
+// Devuelve información del usuario autenticado (se requiere verifyToken middleware)
+export const me = (req, res) => {
+  // verifyToken middleware coloca userId y role en req
+  const userId = req.userId;
+  const sql = "SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1";
+  db.query(sql, [userId], (err, results) => {
+    if (err) return res.status(500).json({ message: "Error al obtener usuario" });
+    if (!results || results.length === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+    const user = results[0];
+    res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+  });
+};

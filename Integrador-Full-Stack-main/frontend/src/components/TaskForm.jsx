@@ -1,5 +1,6 @@
 // src/components/TaskForm.jsx
 import React, { useState, useEffect } from "react";
+import { createPortal } from 'react-dom';
 import api from "../api/axiosConfig";
 import { toast } from "react-toastify";
 
@@ -21,6 +22,7 @@ export default function TaskForm({ onSaved, editingTask = null, onCancel, showFo
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [isFocused, setIsFocused] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (editingTask) {
@@ -36,6 +38,10 @@ export default function TaskForm({ onSaved, editingTask = null, onCancel, showFo
     }
     setErrors({});
   }, [editingTask]);
+
+  // Note: removed global `.App.modal-open` toggling to avoid applying expensive
+  // CSS filters to the whole page which can reduce FPS. We rely on the
+  // overlay pseudo-element backdrop-filter instead.
 
   // Validación en tiempo real
   const validateForm = () => {
@@ -120,9 +126,15 @@ export default function TaskForm({ onSaved, editingTask = null, onCancel, showFo
     }
   };
 
-  return (
-    <div className={`${showForm ? 'floating-form-wrapper' : ''}`}>
-      <div className={`task-form-container ${editingTask ? 'editing' : ''} ${showForm ? 'floating-card-shadow' : ''}`}>
+  const handleClose = () => {
+    if (!onCancel) return;
+    setIsClosing(true);
+    setTimeout(() => { setIsClosing(false); onCancel(); }, 220);
+  };
+
+  const modalContent = (
+    <div className={`${showForm ? 'floating-form-wrapper' : ''} ${showForm && !isClosing ? 'entering' : ''} ${isClosing ? 'exiting' : ''}`} onClick={(e) => { if (showForm && e.target === e.currentTarget) { handleClose(); } }}>
+      <div className={`task-form-container ${editingTask ? 'editing' : ''}`} role={showForm ? 'dialog' : undefined} aria-modal={showForm ? 'true' : undefined}>
         <div className="task-form-header">
           <div className="form-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -239,12 +251,13 @@ export default function TaskForm({ onSaved, editingTask = null, onCancel, showFo
               )}
             </button>
 
-            {editingTask && (
+            {(editingTask || showForm) && onCancel && (
               <button
                 type="button"
                 className="btn-outline"
-                onClick={onCancel}
+                onClick={handleClose}
                 disabled={loading}
+                style={{ marginLeft: 8 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -252,14 +265,13 @@ export default function TaskForm({ onSaved, editingTask = null, onCancel, showFo
                 Cancelar
               </button>
             )}
-            {showForm && (
-              <button type="button" className="btn-secondary" onClick={onCancel} disabled={loading} style={{ marginLeft: 8 }}>
-                Cerrar
-              </button>
-            )}
           </div>
         </form>
       </div>
     </div>
   );
+
+  // Render the modal into document.body so it's outside the `.main-content` filter
+  // and therefore remains visually crisp while the rest of the page is blurred.
+  return (showForm || isClosing) ? createPortal(modalContent, document.body) : null;
 }

@@ -18,7 +18,7 @@ import ConfirmDialog from './ConfirmDialog';
   - Diseño responsivo para móviles
   - Confirmaciones elegantes para acciones destructivas
 */
-export default function TaskList({ showForm = false, setShowForm = null }) {
+export default function TaskList({ visible = true, showForm = false, setShowForm = null, onStatsChange = null }) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingTask, setEditingTask] = useState(null);
@@ -30,12 +30,24 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [movingIds, setMovingIds] = useState([]);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/tasks");
-      setTasks(res.data || []);
+      const items = res.data || [];
+      setTasks(items);
+      // notify parent about stats if requested
+      if (onStatsChange) {
+        const stats = {
+          total: items.length,
+          completed: items.filter(t => t.completed).length,
+          pending: items.filter(t => !t.completed).length,
+          completionRate: items.length > 0 ? Math.round((items.filter(t => t.completed).length / items.length) * 100) : 0
+        };
+        try { onStatsChange(stats); } catch (e) { /* ignore callback errors */ }
+      }
     } catch (err) {
       console.error(err);
       toast.error("❌ No se pudieron cargar las tareas");
@@ -49,17 +61,28 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
   }, [fetchTasks]);
 
   const toggleComplete = useCallback(async (task) => {
-    // actualización optimista local
-    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed: t.completed ? 0 : 1 } : t));
-    try {
-      await api.put(`/tasks/${task.id}`, { ...task, completed: task.completed ? 0 : 1 });
-      toast.success(task.completed ? "📝 Tarea marcada como pendiente" : "✅ Tarea completada");
-    } catch (err) {
-      console.error(err);
-      toast.error("❌ Error al actualizar tarea");
-      // volver a cargar en caso de error
-      fetchTasks();
-    }
+    // start exit animation for this task
+    setMovingIds(prev => Array.from(new Set([...prev, task.id])));
+
+    // wait for animation to play before reordering
+    const ANIM_MS = 220;
+    setTimeout(async () => {
+      // remove id from moving state
+      setMovingIds(prev => prev.filter(id => id !== task.id));
+
+      // optimistic update (toggle completed)
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed: t.completed ? 0 : 1 } : t));
+
+      try {
+        await api.put(`/tasks/${task.id}`, { ...task, completed: task.completed ? 0 : 1 });
+        toast.success(task.completed ? "📝 Tarea marcada como pendiente" : "✅ Tarea completada");
+      } catch (err) {
+        console.error(err);
+        toast.error("❌ Error al actualizar tarea");
+        // volver a cargar en caso de error
+        fetchTasks();
+      }
+    }, ANIM_MS);
   }, [fetchTasks]);
 
   // Ejecuta la petición de borrado (llamada real a la API)
@@ -127,7 +150,14 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
 
   // Ordenar por proximidad a due_date si se selecciona
   const sortedTasks = useMemo(() => {
-    if (sortBy === 'default') return filteredTasks;
+    if (sortBy === 'default') {
+      // place incomplete tasks first, completed tasks at the end
+      return filteredTasks.slice().sort((a, b) => {
+        const ac = a.completed ? 1 : 0;
+        const bc = b.completed ? 1 : 0;
+        return ac - bc; // 0 before 1 -> incomplete before completed
+      });
+    }
     const withDue = filteredTasks.map(t => {
       if (!t.due_date) return { ...t, dueTs: null };
       const parts = t.due_date.split('-').map(Number);
@@ -163,7 +193,7 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
 
   if (loading) {
     return (
-      <div className="loading-container">
+      <div className={`loading-container ${visible ? 'entering' : 'exiting'}`}>
         <div className="loading-spinner"></div>
         <p>Cargando tus tareas...</p>
       </div>
@@ -171,7 +201,7 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
   }
 
   return (
-    <div className="task-section">
+    <div className={`task-section ${visible ? 'entering' : 'exiting'}`}>
       {/* Note: header and create button are rendered in Dashboard. This component shows controls, filters and tasks. */}
 
       {/* Filtros y búsqueda */}
@@ -230,9 +260,12 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
       </div>
       {/* Show inline TaskForm when requested (from Dashboard button or internal) */}
       {(showForm || showInlineForm) && (
-        <div style={{ marginTop: '16px' }}>
-          <TaskForm onSaved={() => { if (setShowForm) setShowForm(false); setShowInlineForm(false); fetchTasks(); }} editingTask={editingTask} onCancel={() => { setEditingTask(null); if (setShowForm) setShowForm(false); setShowInlineForm(false); }} showForm={false} />
-        </div>
+        <TaskForm
+          onSaved={() => { if (setShowForm) setShowForm(false); setShowInlineForm(false); fetchTasks(); }}
+          editingTask={editingTask}
+          onCancel={() => { setEditingTask(null); if (setShowForm) setShowForm(false); setShowInlineForm(false); }}
+          showForm={showForm || showInlineForm}
+        />
       )}
 
       {/* Lista de tareas */}
@@ -255,7 +288,7 @@ export default function TaskList({ showForm = false, setShowForm = null }) {
         ) : (
           <div className="task-grid">
             {sortedTasks.map((task, index) => (
-              <div key={task.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div key={task.id} className={`task-row animate-fade-in-up ${movingIds.includes(task.id) ? 'moving-out' : ''}`} style={{ animationDelay: `${index * 0.1}s` }}>
                 <TaskCard
                   task={task}
                   onToggleComplete={toggleComplete}

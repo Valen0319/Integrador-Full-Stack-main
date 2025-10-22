@@ -22,37 +22,38 @@
   z-index: 101;
 }
 
-.brand-link {
+.stats-cards {
   display: flex;
+  flex-direction: row;
+  /* horizontal layout by default */
+  gap: var(--spacing-lg);
   align-items: center;
-  gap: var(--spacing-sm);
-  text-decoration: none;
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 1.5rem;
-  transition: var(--transition-normal);
 }
 
-.brand-link:hover {
-  color: var(--primary-gold);
-  transform: translateY(-1px);
-}
-
-.brand-icon {
+.stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  flex: 1 1 0;
+  min-width: 110px;
+  text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--primary-gold), var(--deep-blue));
-  border-radius: var(--border-radius-md);
-  color: var(--white);
-  transition: var(--transition-normal);
+  min-height: 72px;
 }
 
-.brand-icon:hover {
-  transform: rotate(5deg) scale(1.1);
-  box-shadow: var(--shadow-gold);
+.stat-card p {
+  margin: 6px 0 0 0;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  transform: none;
+  box-shadow: none;
+  text-shadow: none;
+  filter: none;
 }
 
 .brand-text {
@@ -782,6 +783,75 @@
   gap: var(--spacing-lg);
 }
 
+/* show/hide animation for the task section */
+.task-section.entering {
+  animation: fadeInUp 260ms ease-out both;
+}
+
+.task-section.exiting {
+  animation: fadeOutDown 220ms ease-in both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* animation when a task is being moved out to the end */
+.task-row.moving-out {
+  animation: fadeSlideOut 0.22s ease-in forwards;
+}
+
+@keyframes fadeSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* Ensure all task cards in the grid have equal height */
+.task-row {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.task-row>.task-card {
+  /* make the card fill the row so all cards match height */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.task-content {
+  /* allow content to grow so footer stays pinned to bottom */
+  flex: 1 1 auto;
+}
+
 .task-card {
   background: var(--charcoal);
   border-radius: var(--border-radius-lg);
@@ -1147,19 +1217,147 @@
   height: 16px;
 }
 
+/* Dashboard stats section */
+.dashboard-stats {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.75), rgba(20, 20, 20, 0.8));
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(212, 175, 55, 0.08);
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-cards {
+  display: flex;
+  flex-direction: row;
+  /* horizontal layout by default */
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  flex: 1 1 0;
+  min-width: 110px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+}
+
+.stat-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.stat-card p {
+  margin: 6px 0 0 0;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  /* remove shimmer/bright effect */
+  text-shadow: none;
+  filter: none;
+}
+
+@media (max-width: 768px) {
+  .stats-cards {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-stats {
+    padding: var(--spacing-sm);
+  }
+}
+
 /* Floating form wrapper positioned relative to the task list */
 .floating-form-wrapper {
   position: fixed;
-  top: 110px;
-  right: 40px;
-  width: 420px;
-  max-width: calc(100% - 40px);
-  z-index: 2500;
-  animation: slideDown 0.18s ease-out;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  /* ensure it overlays everything */
+  padding: 20px;
+  pointer-events: auto;
+}
+
+/* Add a full-viewport backdrop pseudo-layer so backdrop-filter applies to everything under it
+   (some browsers only apply backdrop-filter to elements behind the element itself). The
+   pseudo element sits below the modal content but above the page so all cards/content
+   underneath are blurred/dimmed. */
+.floating-form-wrapper::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px) saturate(0.9);
+  -webkit-backdrop-filter: blur(6px) saturate(0.9);
+  z-index: 99999;
+  /* same stacking context as wrapper but below modal which is 100000 */
+  pointer-events: auto;
+}
+
+/* modal open/close for TaskForm */
+.floating-form-wrapper.entering .task-form-container {
+  animation: modalIn 220ms cubic-bezier(.2, .9, .2, 1) both;
+}
+
+.floating-form-wrapper.exiting .task-form-container {
+  animation: modalOut 180ms cubic-bezier(.4, .0, .2, 1) both;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
 }
 
 .floating-card-shadow {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  /* intentionally empty: modal should not cast a shadow when open (user requested no shadow) */
+  box-shadow: none !important;
+}
+
+.floating-form-wrapper .task-form-container {
+  z-index: 100000;
+  /* place the card above the overlay layer */
+  max-width: 720px;
+  width: 100%;
+}
+
+/* When the modal is open, blur and dim the entire app content so all cards (welcome, stats, tasks) are affected. */
+.floating-form-wrapper,
+.floating-form-wrapper .task-form-container {
+  /* The overlay pseudo-element handles dim+blur via backdrop-filter; keep modal crisp */
+  filter: none !important;
+  pointer-events: auto;
 }
 
 .loading-spinner.small {
